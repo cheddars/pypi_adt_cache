@@ -1,0 +1,60 @@
+import string
+import random
+from datetime import datetime
+from cache import *
+
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
+
+
+def generate_samples():
+    strs = [get_random_string(20) for i in range(100000)]
+    sample_01_100 = [random.choice(strs) for i in range(100)]
+    sample_02_90 = [random.choice(strs) for i in range(90)]
+    sample_03_80 = [random.choice(strs) for i in range(80)]
+    sample_04_70 = [random.choice(strs) for i in range(70)]
+    sample_05_60 = [random.choice(strs) for i in range(60)]
+    sample_06_50 = [random.choice(strs) for i in range(50)]
+
+    strxs = [get_random_string(21) for i in range(10000)]
+    samplex_01_10 = [random.choice(strxs) for i in range(10)]
+    samplex_02_20 = [random.choice(strxs) for i in range(20)]
+    samplex_03_30 = [random.choice(strxs) for i in range(30)]
+    samplex_04_40 = [random.choice(strxs) for i in range(40)]
+    samplex_05_50 = [random.choice(strxs) for i in range(50)]
+    samplex_06_60 = [random.choice(strxs) for i in range(60)]
+
+
+    samples = [sample_01_100 + samplex_01_10,
+               sample_02_90 + samplex_02_20,
+               sample_03_80 + samplex_03_30,
+               sample_04_70 + samplex_04_40,
+               sample_05_60 + samplex_05_50,
+               sample_06_50 + samplex_06_60]
+    for s in samples:
+        random.shuffle(s)
+    return strs, samples
+
+
+def test_cache(cache: AdtCache):
+    strs, samples = generate_samples()
+    timing = [datetime.now()]
+    mcache: AdtCache = cache
+    mcache.push_values("random_keys", strs)
+    print(len(samples[0]))
+    timing.append(datetime.now())
+    for s in samples:
+        inter = mcache.intersect("random_keys", s)
+        print(len(inter))
+        timing.append(datetime.now())
+
+    return timing
+
+
+if __name__ == "__main__":
+    timings = test_cache(MemoryCache())
+    deltas = [timings[i + 1] - timings[i] for i in range(len(timings) - 1)]
+    print(deltas)
+    #test_cache(RedisCache(host="localhost", port=6379, db=0))
