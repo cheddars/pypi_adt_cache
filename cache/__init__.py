@@ -1,7 +1,9 @@
+import logging
 from abc import abstractmethod, ABCMeta
 from typing import List
 import redis
 
+logger = logging.getLogger("adt_cache")
 
 class AdtCache(metaclass=ABCMeta):
     def __init__(self):
@@ -12,20 +14,39 @@ class AdtCache(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def differential(self, key: str, vals: List):
+        pass
+
+    @abstractmethod
     def push_values(self, key: str, vals: List):
+        pass
+
+    @abstractmethod
+    def keys(self):
         pass
 
 
 class RedisCache(AdtCache):
-    def __init__(self, host, port, db):
+    def __init__(self, host: str, port, db, expire_mins=60*24, clear_cache=False):
+        logger.info(f"init redis cache with {host}:{port}:{db}")
         super().__init__()
         self.redis = redis.Redis(host=host, port=port, db=db)
+        self.expire_mins=expire_mins
+        if clear_cache:
+            self.redis.flushdb()
 
     def intersect(self, key, vals: List):
         return [val for val in vals if self.redis.sismember(key, val)]
 
+    def differential(self, key, vals: List):
+        return [val for val in vals if not self.redis.sismember(key, val)]
+
     def push_values(self, key, vals: List):
+        self.redis.expire(key, 60 * self.expire_mins)
         return self.redis.sadd(key, *set(vals))
+
+    def keys(self):
+        return self.redis.keys()
 
 
 class MemoryCache(AdtCache):
@@ -36,7 +57,7 @@ class MemoryCache(AdtCache):
     def intersect(self, key, vals: List):
         return [val for val in vals if val in self.cache.get(key, [])]
 
-    def differencial(self, key, vals: List):
+    def differential(self, key, vals: List):
         return [val for val in vals if val not in self.cache.get(key, [])]
 
     def push_values(self, key, vals: List):
@@ -44,4 +65,7 @@ class MemoryCache(AdtCache):
         if c is None:
             self.cache[key] = set(vals)
         else:
-            c.extend(set(vals))
+            c.update(vals)
+
+    def keys(self):
+        return self.cache.keys()

@@ -10,7 +10,7 @@ def get_random_string(length):
 
 
 def generate_samples():
-    strs = [get_random_string(20) for i in range(100000)]
+    strs = [get_random_string(20) for i in range(10000)]
     sample_01_100 = [random.choice(strs) for i in range(100)]
     sample_02_90 = [random.choice(strs) for i in range(90)]
     sample_03_80 = [random.choice(strs) for i in range(80)]
@@ -18,7 +18,7 @@ def generate_samples():
     sample_05_60 = [random.choice(strs) for i in range(60)]
     sample_06_50 = [random.choice(strs) for i in range(50)]
 
-    strxs = [get_random_string(21) for i in range(10000)]
+    strxs = [get_random_string(21) for i in range(1000)]
     samplex_01_10 = [random.choice(strxs) for i in range(10)]
     samplex_02_20 = [random.choice(strxs) for i in range(20)]
     samplex_03_30 = [random.choice(strxs) for i in range(30)]
@@ -40,21 +40,42 @@ def generate_samples():
 
 def test_cache(cache: AdtCache):
     strs, samples = generate_samples()
-    timing = [datetime.now()]
+    timing = {"init" : datetime.now()}
     mcache: AdtCache = cache
     mcache.push_values("random_keys", strs)
-    print(len(samples[0]))
-    timing.append(datetime.now())
-    for s in samples:
+    timing["push"] = datetime.now()
+    for i, s in enumerate(samples):
         inter = mcache.intersect("random_keys", s)
-        print(len(inter))
-        timing.append(datetime.now())
+        timing[f"intersect_{i}"] = datetime.now()
 
     return timing
 
+def test_memcache():
+    epochs = 10
+    epoch_list = []
+    for i in range(epochs):
+        timings = test_cache(MemoryCache())
+        values = list(timings.values())
+        deltas = [values[i + 1] - values[i] for i in range(len(values) - 1)]
+        epoch_list.append(list(map(lambda x: x.total_seconds() * 1000, deltas)))
+    #test_cache(RedisCache(host="localhost", port=6379, db=0))
+
+    for i in range(len(epoch_list[0])):
+        print(f"{i}: {sum([e[i] for e in epoch_list]) / epochs}")
+
+def test_rediscache():
+    epochs = 10
+    epoch_list = []
+    for i in range(epochs):
+        timings = test_cache(RedisCache(host="localhost", port=6380, db=1))
+        values = list(timings.values())
+        deltas = [values[i + 1] - values[i] for i in range(len(values) - 1)]
+        print(deltas)
+        epoch_list.append(map(lambda x: {"round": i, "secs": x.total_seconds() * 1000}, deltas))
+
+    print(epoch_list)
+#    for i in range(len(epoch_list[0].values())):
+#        print(f"{i}: {sum([e.values()[i] for e in epoch_list]) / epochs}")
 
 if __name__ == "__main__":
-    timings = test_cache(MemoryCache())
-    deltas = [timings[i + 1] - timings[i] for i in range(len(timings) - 1)]
-    print(deltas)
-    #test_cache(RedisCache(host="localhost", port=6379, db=0))
+   test_rediscache()
