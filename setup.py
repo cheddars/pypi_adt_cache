@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="adt_cache",
-    version="0.0.1",
+    version="0.0.12",
     license='MIT',
     author="cheddars",
     author_email="nezahrish@gmail.com",

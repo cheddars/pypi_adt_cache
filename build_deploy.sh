@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-rm -rf dist build dartrrig.egg-info
+rm -rf dist build *.egg-info
 
 python3 setup.py clean --all install clean --all
 python3 setup.py sdist bdist_wheel
