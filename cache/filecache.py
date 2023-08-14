@@ -22,7 +22,7 @@ class FileCache:
         file_name = self.base_dir + '/' + prefix + '/' + yyyy + '/' + mm + '/' + dd + '/' + key + '.' + ext
         if not os.path.exists(file_name):
             return None
-        with open(file_name, 'r') as f:
+        with open(file_name, 'r', encoding="utf-8") as f:
             self.logger.debug(f"reading file {file_name}")
             return f.read()
 
@@ -35,5 +35,5 @@ class FileCache:
         os.makedirs(file_dir, exist_ok=True)
 
         file_name =file_dir + '/' + key + '.' + ext
-        with open(file_name, "w") as f:
+        with open(file_name, "w", encoding="utf-8") as f:
             f.write(data)

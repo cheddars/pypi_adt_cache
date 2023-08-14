@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod, ABCMeta
 from typing import List, Dict
-import redis
+
 
 logger = logging.getLogger("adt_cache")
 
@@ -66,6 +66,7 @@ class AdtCache(metaclass=ABCMeta):
 
 class RedisCache(AdtCache):
     def __init__(self, host: str, port: int, db: int, expire_mins: int=60*24, clear_cache=False, decode_res=True):
+        import redis
         logger.info(f"init redis cache with {host}:{port}:{db}")
         super().__init__()
         self.redis = redis.Redis(host=host, port=port, db=db, decode_responses=decode_res)
